@@ -162,7 +162,7 @@ body {
   flex:1;
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
-  padding:16px; gap:24px;
+  padding:16px; gap:56px;
   position:relative; overflow:hidden;
 }
 
@@ -446,7 +446,6 @@ body {
     <div class="timerDisp" id="timer" style="display:none">60</div>
   </div>
   <div class="pbarWrap"><div class="pbar" id="pbar" style="width:0%"></div></div>
-  <div class="modeBanner normal" id="mode-banner">🎨 色を答えてください</div>
 
   <div class="taskArea" id="task-area">
     <div class="matchBadge" id="match-badge" style="display:none">✅ 一致</div>
@@ -677,16 +676,6 @@ function renderTask() {
   document.getElementById('q-ng').textContent  = sess.ng;
   document.getElementById('pbar').style.width  = ((n-1)/sess.count*100)+'%';
   document.getElementById('match-badge').style.display = t.isMatch ? '' : 'none';
-
-  // バナー
-  const banner = document.getElementById('mode-banner');
-  if (t.axis === 'normal') {
-    banner.className = 'modeBanner normal';
-    banner.textContent = t.task==='color' ? '🎨 色を答えてください' : '📍 位置を答えてください';
-  } else {
-    banner.className = 'modeBanner reverse';
-    banner.textContent = '💡 文字の意味を答えてください';
-  }
 
   // 刺激
   const isC = t.task === 'color';
