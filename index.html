@@ -77,7 +77,8 @@ body{background:var(--bg);color:var(--text);font-family:'Hiragino Sans','Noto Sa
 .start-btn:active{opacity:.8;}
 
 /* ===== セッション画面 ===== */
-#screen-session{overflow:hidden;}
+#screen-session{overflow:hidden;display:none;flex-direction:column;}
+#screen-session.active{display:flex;}
 .s-header{display:flex;align-items:center;justify-content:space-between;
   padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:10px;}
 .prog-info{display:flex;gap:14px;font-size:13px;color:var(--text-sub);}
@@ -787,13 +788,8 @@ document.getElementById('btn-abort').addEventListener('touchend', function() {
 
 // ===== 画面遷移 =====
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => {
-    s.classList.remove('active');
-    s.style.display = 'none';
-  });
-  const el = document.getElementById(id);
-  el.style.display = 'flex';
-  el.classList.add('active');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 function goSetup() {
   showScreen('screen-setup');
