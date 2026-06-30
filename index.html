@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="./manifest.json">
+<title>Stroop訓練</title>
+<style>
+:root {
+  --bg:#0d1117; --surface:#161b22; --surface2:#21262d; --border:#30363d;
+  --text:#e6edf3; --text-sub:#8b949e;
+  --accent:#58a6ff; --accent2:#3fb950; --warn:#f85149;
+  --red:#ff6b6b; --blue:#58a6ff; --green:#3fb950; --yellow-c:#e3b341;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'Hiragino Sans','Noto Sans JP',sans-serif;
+  height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+
+.header{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+.header h1{font-size:17px;font-weight:700;}
+.hdr-btns{display:flex;gap:8px;}
+.icon-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;}
+.icon-btn:active{background:var(--border);}
+
+.main{flex:1;overflow:hidden;position:relative;}
+.screen{display:none;flex-direction:column;height:100%;overflow-y:auto;}
+.screen.active{display:flex;}
+
+/* ===== 設定画面 ===== */
+#screen-setup{padding:20px;gap:14px;}
+.sec-label{font-size:11px;font-weight:700;color:var(--text-sub);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:8px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.card-title{font-size:14px;font-weight:700;margin-bottom:12px;}
+
+/* ラジオ風トグル（排他） */
+.radio-group{display:flex;flex-direction:column;gap:8px;}
+.radio-btn{display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;
+  cursor:pointer;transition:all .15s;font-family:inherit;color:var(--text);text-align:left;}
+.radio-btn.on{background:rgba(88,166,255,.12);border-color:var(--accent);}
+.radio-btn:active{opacity:.7;}
+.radio-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);
+  flex-shrink:0;transition:all .15s;}
+.radio-btn.on .radio-dot{border-color:var(--accent);background:var(--accent);}
+.radio-label{font-size:14px;font-weight:600;}
+.radio-sub{font-size:12px;color:var(--text-sub);margin-top:2px;}
+
+/* チェックボックス風トグル */
+.check-row{display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;
+  cursor:pointer;transition:all .15s;font-family:inherit;color:var(--text);}
+.check-row.on{background:rgba(63,185,80,.1);border-color:var(--accent2);}
+.check-row:active{opacity:.7;}
+.check-box{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:13px;transition:all .15s;}
+.check-row.on .check-box{border-color:var(--accent2);background:var(--accent2);color:#fff;}
+.check-label{font-size:14px;font-weight:600;}
+.check-sub{font-size:12px;color:var(--text-sub);margin-top:1px;}
+
+.num-row{display:flex;align-items:center;gap:12px;padding:4px 0;}
+.num-row label{font-size:14px;color:var(--text-sub);flex:1;}
+.num-row input{width:80px;padding:8px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:16px;text-align:center;font-family:inherit;}
+.num-row input:focus{outline:none;border-color:var(--accent);}
+.num-row span{font-size:13px;color:var(--text-sub);}
+.hint{font-size:12px;color:var(--text-sub);margin-top:10px;line-height:1.6;}
+
+.start-btn{width:100%;padding:18px;background:var(--accent);border:none;border-radius:12px;
+  color:#0d1117;font-size:18px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:4px;}
+.start-btn:active{opacity:.8;}
+
+/* ===== セッション画面 ===== */
+#screen-session{overflow:hidden;}
+.s-header{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:10px;}
+.prog-info{display:flex;gap:14px;font-size:13px;color:var(--text-sub);}
+.prog-info strong{color:var(--text);font-size:15px;}
+.timer-disp{font-size:20px;font-weight:800;color:var(--accent);
+  font-variant-numeric:tabular-nums;min-width:50px;text-align:right;}
+.timer-disp.warn{color:var(--warn);}
+.pbar-wrap{height:3px;background:var(--surface2);flex-shrink:0;}
+.pbar{height:100%;background:var(--accent);transition:width .3s;}
+
+/* 回答モードバナー */
+.mode-banner{display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 16px;flex-shrink:0;font-size:13px;font-weight:700;letter-spacing:.03em;}
+.mode-banner.normal{background:rgba(88,166,255,.1);color:var(--accent);}
+.mode-banner.reverse{background:rgba(63,185,80,.1);color:var(--accent2);}
+
+/* 一致条件バッジ */
+.match-badge{
+  position:absolute;top:10px;right:14px;
+  font-size:11px;font-weight:700;letter-spacing:.05em;
+  background:rgba(211,179,66,.15);color:#e3b341;
+  border:1px solid rgba(211,179,66,.4);border-radius:20px;padding:3px 10px;
+}
+
+/* 課題エリア */
+.task-area{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:16px 16px 8px;gap:24px;position:relative;overflow:hidden;}
+
+.color-word{font-size:82px;font-weight:900;line-height:1;letter-spacing:-.02em;
+  text-shadow:0 2px 16px rgba(0,0,0,.5);}
+.pos-display{width:100%;height:140px;position:relative;display:flex;align-items:center;}
+.pos-word{font-size:62px;font-weight:900;color:var(--text);position:absolute;}
+
+.q-text{font-size:15px;color:var(--text-sub);text-align:center;line-height:1.5;}
+.q-text strong{color:var(--text);font-size:17px;}
+
+/* 回答ボタン */
+.ans-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:380px;}
+.pos-ans-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:380px;}
+.ans-btn{padding:20px 8px;border-radius:12px;border:2px solid var(--border);
+  font-size:22px;font-weight:800;cursor:pointer;transition:all .1s;font-family:inherit;
+  background:var(--surface2);color:var(--text);}
+.ans-btn:active{transform:scale(.95);opacity:.8;}
+.ans-btn[data-c="赤"]{border-color:var(--red);color:var(--red);}
+.ans-btn[data-c="青"]{border-color:var(--blue);color:var(--blue);}
+.ans-btn[data-c="緑"]{border-color:var(--green);color:var(--green);}
+.ans-btn[data-c="黄"]{border-color:var(--yellow-c);color:var(--yellow-c);}
+
+/* ST代行 */
+.th-area{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:380px;}
+.th-hint{font-size:13px;color:var(--text-sub);background:var(--surface2);
+  border:1px solid var(--border);border-radius:8px;padding:8px 16px;}
+.th-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+.th-ok{padding:22px;background:rgba(63,185,80,.15);border:2px solid var(--accent2);
+  border-radius:12px;color:var(--accent2);font-size:20px;font-weight:800;cursor:pointer;font-family:inherit;}
+.th-ng{padding:22px;background:rgba(248,81,73,.15);border:2px solid var(--warn);
+  border-radius:12px;color:var(--warn);font-size:20px;font-weight:800;cursor:pointer;font-family:inherit;}
+.th-ok:active,.th-ng:active{opacity:.7;}
+
+/* 回答軸切替アラート */
+.switch-alert{position:absolute;inset:0;background:rgba(13,17,23,.93);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;z-index:20;opacity:0;pointer-events:none;transition:opacity .2s;padding:30px;}
+.switch-alert.show{opacity:1;pointer-events:all;}
+.switch-icon{font-size:52px;}
+.switch-title{font-size:22px;font-weight:800;}
+.switch-body{font-size:15px;color:var(--text-sub);text-align:center;line-height:1.7;}
+.switch-body strong{color:var(--text);font-size:18px;}
+.switch-ok{padding:14px 48px;background:var(--accent);border:none;border-radius:10px;
+  color:#0d1117;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:4px;}
+.switch-ok:active{opacity:.8;}
+
+/* フィードバック */
+.feedback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:80px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;}
+.feedback.show{opacity:1;}
+
+/* ===== 結果画面 ===== */
+#screen-result{padding:20px;gap:14px;}
+.res-hero{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px 20px;text-align:center;}
+.res-score{font-size:64px;font-weight:900;color:var(--accent);line-height:1;}
+.res-lbl{font-size:14px;color:var(--text-sub);margin-top:6px;}
+.res-meta{display:flex;justify-content:center;gap:32px;margin-top:20px;}
+.res-mi .val{font-size:28px;font-weight:800;text-align:center;}
+.res-mi .lbl{font-size:12px;color:var(--text-sub);margin-top:2px;text-align:center;}
+.breakdown{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.bd-row{display:flex;justify-content:space-between;align-items:center;
+  padding:13px 16px;border-bottom:1px solid var(--border);font-size:14px;}
+.bd-row:last-child{border-bottom:none;}
+.bd-lbl{color:var(--text-sub);}
+.bd-val{font-weight:700;font-size:15px;}
+.res-btns{display:flex;gap:10px;}
+.res-btns button{flex:1;padding:15px;border-radius:12px;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:inherit;}
+.btn-retry{background:var(--accent);border:none;color:#0d1117;}
+.btn-hist{background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+.btn-retry:active,.btn-hist:active{opacity:.7;}
+
+/* ===== 履歴画面 ===== */
+#screen-history{padding:20px;gap:14px;}
+.hist-hdr{display:flex;justify-content:space-between;align-items:center;}
+.hist-title{font-size:16px;font-weight:700;}
+.hist-clear{background:none;border:1px solid var(--warn);color:var(--warn);
+  border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;}
+.hist-list{display:flex;flex-direction:column;gap:10px;}
+.hist-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+.hist-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.hist-date{font-size:12px;color:var(--text-sub);}
+.hist-pct{font-size:20px;font-weight:800;color:var(--accent);}
+.hist-detail{font-size:13px;color:var(--text-sub);line-height:1.8;}
+.empty{text-align:center;padding:60px 20px;color:var(--text-sub);font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧠 Stroop訓練</h1>
+  <div class="hdr-btns">
+    <button class="icon-btn" id="btn-hist">履歴</button>
+    <button class="icon-btn" id="btn-setup" style="display:none">設定</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ① 設定画面 -->
+<div class="screen active" id="screen-setup">
+
+  <div class="sec-label">課題タイプ</div>
+  <div class="card">
+    <div class="radio-group" id="rg-tasktype">
+      <button class="radio-btn on" data-val="color">
+        <div class="radio-dot"></div>
+        <div><div class="radio-label">色 × 文字</div>
+        <div class="radio-sub">「赤」という文字が青色で表示される</div></div>
+      </button>
+      <button class="radio-btn" data-val="position">
+        <div class="radio-dot"></div>
+        <div><div class="radio-label">位置 × 文字</div>
+        <div class="radio-sub">「右」という文字が左端に表示される</div></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="sec-label">文字種</div>
+  <div class="card">
+    <div class="radio-group" id="rg-chartype">
+      <button class="radio-btn on" data-val="kanji">
+        <div class="radio-dot"></div>
+        <div><div class="radio-label">漢字</div>
+        <div class="radio-sub">赤・青・緑・黄　／　右・中・左</div></div>
+      </button>
+      <button class="radio-btn" data-val="hira">
+        <div class="radio-dot"></div>
+        <div><div class="radio-label">ひらがな</div>
+        <div class="radio-sub">あか・あお・みどり・きいろ　／　みぎ・なか・ひだり</div></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="sec-label">回答軸（何を答えるか）</div>
+  <div class="card">
+    <div class="radio-group" id="rg-ansaxis">
+      <button class="radio-btn on" data-val="normal">
+        <div class="radio-dot"></div>
+        <div><div class="radio-label">通常条件</div>
+        <div class="radio-sub">色課題→色を答える　位置課題→位置を答える</div></div>
+      </button>
+      <button class="radio-btn" data-val="reverse">
+        <div class="radio-dot"></div>
+        <div><div class="radio-label">逆条件</div>
+        <div class="radio-sub">色課題→意味を答える　位置課題→意味を答える</div></div>
+      </button>
+      <button class="radio-btn" data-val="random">
+        <div class="radio-dot"></div>
+        <div><div class="radio-label">ランダム切替</div>
+        <div class="radio-sub">通常と逆がセッション中にランダムで切り替わる</div></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="sec-label">一致条件（刺激のギャップなし）</div>
+  <div class="card">
+    <button class="check-row" id="check-match">
+      <div class="check-box">✓</div>
+      <div>
+        <div class="check-label">たまに混ぜる</div>
+        <div class="check-sub">約20%の確率で一致刺激が出現。回答軸はそのまま継続。</div>
+      </div>
+    </button>
+  </div>
+
+  <div class="sec-label">選択肢の並び順</div>
+  <div class="card">
+    <button class="check-row on" id="check-shuffle">
+      <div class="check-box">✓</div>
+      <div>
+        <div class="check-label">毎回シャッフルする</div>
+        <div class="check-sub">正解ボタンの位置が毎回変わる。位置記憶による正答を防ぐ。</div>
+      </div>
+    </button>
+  </div>
+
+  <div class="sec-label">回答方式</div>
+  <div class="card">
+    <div class="radio-group" id="rg-ansmode">
+      <button class="radio-btn on" data-val="tap">
+        <div class="radio-dot"></div>
+        <div><div class="radio-label">患者タップ</div>
+        <div class="radio-sub">患者自身が画面のボタンを押して回答</div></div>
+      </button>
+      <button class="radio-btn" data-val="therapist">
+        <div class="radio-dot"></div>
+        <div><div class="radio-label">ST/PT代行入力</div>
+        <div class="radio-sub">患者が口頭回答 → 療法士が正誤をタップ</div></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="sec-label">セッション設定</div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px;">
+    <div class="num-row">
+      <label>課題数</label>
+      <input type="number" id="inp-count" value="20" min="5" max="100">
+      <span>問</span>
+    </div>
+    <div class="num-row">
+      <label>時間制限</label>
+      <input type="number" id="inp-time" value="0" min="0" max="600">
+      <span>秒（0=なし）</span>
+    </div>
+  </div>
+
+  <button class="start-btn" id="btn-start">スタート</button>
+</div>
+
+<!-- ② セッション画面 -->
+<div class="screen" id="screen-session">
+  <div class="s-header">
+    <div class="prog-info">
+      <div><strong id="q-cur">1</strong>/<span id="q-tot">20</span></div>
+      <div>✅<strong id="q-ok">0</strong></div>
+      <div>❌<strong id="q-ng">0</strong></div>
+    </div>
+    <div class="timer-disp" id="timer" style="display:none">60</div>
+
+  </div>
+  <div class="pbar-wrap"><div class="pbar" id="pbar" style="width:0%"></div></div>
+
+  <!-- 回答軸バナー（何を答えるか） -->
+  <div class="mode-banner normal" id="mode-banner">🎨 色を答えてください</div>
+
+  <!-- 課題エリア -->
+  <div class="task-area" id="task-area">
+
+    <!-- 一致条件バッジ（出た時だけ表示） -->
+    <div class="match-badge" id="match-badge" style="display:none">✅ 一致</div>
+
+    <!-- 色課題表示 -->
+    <div id="color-disp" style="display:none;">
+      <div class="color-word" id="color-word">赤</div>
+    </div>
+
+    <!-- 位置課題表示 -->
+    <div class="pos-display" id="pos-disp" style="display:none;">
+      <div class="pos-word" id="pos-word">右</div>
+    </div>
+
+    <!-- 質問文 -->
+    <div class="q-text" id="q-text"></div>
+
+    <!-- 患者タップ：回答ボタン（動的生成） -->
+    <div class="ans-grid" id="ans-color" style="display:none;"></div>
+    <div class="pos-ans-grid" id="ans-pos" style="display:none;"></div>
+    <div class="ans-grid" id="ans-meaning-color" style="display:none;"></div>
+    <div class="pos-ans-grid" id="ans-meaning-pos" style="display:none;"></div>
+
+    <!-- ST代行 -->
+    <div class="th-area" id="th-area" style="display:none;">
+      <div class="th-hint">正解：「<span id="th-hint">？</span>」</div>
+      <div class="th-btns">
+        <button class="th-ok" onclick="onAns('__ok__')">✓ 正解</button>
+        <button class="th-ng" onclick="onAns('__ng__')">✗ 誤答</button>
+      </div>
+    </div>
+
+    <!-- 回答軸切替アラート -->
+    <div class="switch-alert" id="switch-alert">
+      <div class="switch-icon">🔄</div>
+      <div class="switch-title">条件切替！</div>
+      <div class="switch-body" id="switch-body"></div>
+      <button class="switch-ok" id="switch-ok-btn">わかった、続ける</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <!-- 終了ボタン：課題エリアの外・下部に独立配置 -->
+  <div style="padding:0 20px 28px;flex-shrink:0;">
+    <button id="btn-abort"
+      style="width:100%;padding:13px;background:none;border:1.5px solid var(--border);
+      border-radius:10px;color:var(--text-sub);font-size:14px;font-weight:600;
+      cursor:pointer;font-family:inherit;letter-spacing:.03em;">
+      セッションを終了する
+    </button>
+  </div>
+</div>
+
+<!-- ③ 結果画面 -->
+<div class="screen" id="screen-result">
+  <div class="res-hero">
+    <div class="res-score" id="res-rate">—</div>
+    <div class="res-lbl">正答率</div>
+    <div class="res-meta">
+      <div class="res-mi"><div class="val" id="res-ok">—</div><div class="lbl">正解</div></div>
+      <div class="res-mi"><div class="val" id="res-ng">—</div><div class="lbl">誤答</div></div>
+      <div class="res-mi"><div class="val" id="res-t">—</div><div class="lbl">所要時間</div></div>
+    </div>
+  </div>
+  <div class="breakdown" id="breakdown"></div>
+  <div class="res-btns">
+    <button class="btn-retry" onclick="goSetup()">もう一度</button>
+    <button class="btn-hist" onclick="goHistory()">履歴を見る</button>
+  </div>
+</div>
+
+<!-- ④ 履歴画面 -->
+<div class="screen" id="screen-history">
+  <div class="hist-hdr">
+    <div class="hist-title">📊 セッション履歴</div>
+    <button class="hist-clear" onclick="clearHist()">全削除</button>
+  </div>
+  <div class="hist-list" id="hist-list"></div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ===== 定数 =====
+// 漢字
+const COLORS_K = ['赤','青','緑','黄'];
+const POSITIONS_K = ['左','中','右'];
+// ひらがな（意味は漢字キーで管理、表示だけひらがな）
+const HIRA_MAP = {'赤':'あか','青':'あお','緑':'みどり','黄':'きいろ','左':'ひだり','中':'なか','右':'みぎ'};
+const COLOR_CSS = {'赤':'var(--red)','青':'var(--blue)','緑':'var(--green)','黄':'var(--yellow-c)'};
+const POS_CSS = {'左':'2%','中':'calc(50% - 45px)','右':'calc(98% - 90px)'};
+
+// charTypeに応じたラベル取得（表示用）
+function dispLabel(key) {
+  return cfg.charType === 'hira' ? HIRA_MAP[key] : key;
+}
+// 現在のCOLORS/POSITIONS（キーは常に漢字、表示だけ変わる）
+function getColors() { return COLORS_K; }
+function getPositions() { return POSITIONS_K; }
+
+// Fisher-Yatesシャッフル（配列をその場でランダムに並び替える）
+function shuffleArr(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ===== 設定状態 =====
+let cfg = { taskType:'color', charType:'kanji', ansAxis:'normal', useMatch:true, shuffle:true, ansMode:'tap' };
+
+// ラジオグループ（排他選択）
+function initRadioGroup(groupId, cfgKey) {
+  document.querySelectorAll(`#${groupId} .radio-btn`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`#${groupId} .radio-btn`).forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      cfg[cfgKey] = btn.dataset.val;
+    });
+  });
+}
+initRadioGroup('rg-tasktype', 'taskType');
+initRadioGroup('rg-chartype', 'charType');
+initRadioGroup('rg-ansaxis', 'ansAxis');
+initRadioGroup('rg-ansmode', 'ansMode');
+
+// チェックボックス（一致条件）
+const checkMatch = document.getElementById('check-match');
+checkMatch.classList.add('on');
+checkMatch.addEventListener('click', () => {
+  checkMatch.classList.toggle('on');
+  cfg.useMatch = checkMatch.classList.contains('on');
+});
+
+const checkShuffle = document.getElementById('check-shuffle');
+checkShuffle.addEventListener('click', () => {
+  checkShuffle.classList.toggle('on');
+  cfg.shuffle = checkShuffle.classList.contains('on');
+});
+
+// ===== セッション状態 =====
+let sess = {};
+let timerIv = null;
+let startTime = 0;
+
+// ===== 課題生成 =====
+// ansAxis: 'normal' | 'reverse'（その問の回答軸）
+// isMatch: true/false（刺激が一致かどうか）
+function makeTask(taskType, ansAxis, isMatch) {
+  const colors = getColors();
+  const positions = getPositions();
+  if (taskType === 'color') {
+    const word = colors[Math.floor(Math.random() * colors.length)];
+    let displayColor;
+    if (isMatch) {
+      displayColor = word;
+    } else {
+      const others = colors.filter(c => c !== word);
+      displayColor = others[Math.floor(Math.random() * others.length)];
+    }
+    const correct = ansAxis === 'normal' ? displayColor : word;
+    return { taskType, ansAxis, isMatch, word, displayColor, correct };
+  } else {
+    const word = positions[Math.floor(Math.random() * positions.length)];
+    let displayPos;
+    if (isMatch) {
+      displayPos = word;
+    } else {
+      const others = positions.filter(p => p !== word);
+      displayPos = others[Math.floor(Math.random() * others.length)];
+    }
+    const correct = ansAxis === 'normal' ? displayPos : word;
+    return { taskType, ansAxis, isMatch, word, displayPos, correct };
+  }
+}
+
+// ===== 全タスクリスト生成 =====
+function buildTaskList(count, taskType, ansAxis, useMatch) {
+  const tasks = [];
+
+  // ランダム切替の場合：切替ポイントを決める
+  let switchPoints = []; // {atIndex, toAxis} 何問目に切り替えるか
+  if (ansAxis === 'random') {
+    let curAxis = Math.random() < 0.5 ? 'normal' : 'reverse';
+    let i = 3 + Math.floor(Math.random() * 5);
+    while (i < count - 1) {
+      switchPoints.push({ atIndex: i, toAxis: curAxis === 'normal' ? 'reverse' : 'normal' });
+      curAxis = curAxis === 'normal' ? 'reverse' : 'normal';
+      i += 4 + Math.floor(Math.random() * 7);
+    }
+  }
+
+  let currentAxis = ansAxis === 'random'
+    ? (Math.random() < 0.5 ? 'normal' : 'reverse')
+    : ansAxis;
+
+  let nextSwitch = 0; // switchPointsのインデックス
+
+  for (let i = 0; i < count; i++) {
+    // 一致条件：約20%の確率
+    const isMatch = useMatch && Math.random() < 0.20;
+    const task = makeTask(taskType, currentAxis, isMatch);
+
+    // このタスクの後に切替が必要か
+    task.switchAfter = false;
+    task.nextAxis = null;
+    if (ansAxis === 'random' && nextSwitch < switchPoints.length && i === switchPoints[nextSwitch].atIndex) {
+      task.switchAfter = true;
+      task.nextAxis = switchPoints[nextSwitch].toAxis;
+      currentAxis = task.nextAxis;
+      nextSwitch++;
+    }
+
+    tasks.push(task);
+  }
+  return tasks;
+}
+
+// ===== スタート =====
+document.getElementById('btn-start').addEventListener('click', () => {
+  const count = parseInt(document.getElementById('inp-count').value) || 20;
+  const timeLimit = parseInt(document.getElementById('inp-time').value) || 0;
+
+  const tasks = buildTaskList(count, cfg.taskType, cfg.ansAxis, cfg.useMatch);
+
+  sess = { tasks, count, current:0, correct:0, wrong:0,
+           timeLimit, elapsed:0, ansMode:cfg.ansMode,
+           bd:{} };
+  startTime = Date.now();
+
+  showScreen('screen-session');
+  document.getElementById('btn-setup').style.display = '';
+  document.getElementById('q-tot').textContent = count;
+
+  const timerEl = document.getElementById('timer');
+  if (timeLimit > 0) {
+    timerEl.style.display = '';
+    timerEl.textContent = timeLimit;
+    timerEl.classList.remove('warn');
+    timerIv = setInterval(tickTimer, 1000);
+  } else {
+    timerEl.style.display = 'none';
+  }
+
+  renderTask();
+});
+
+function tickTimer() {
+  sess.elapsed++;
+  const rem = sess.timeLimit - sess.elapsed;
+  const el = document.getElementById('timer');
+  el.textContent = rem;
+  if (rem <= 10) el.classList.add('warn');
+  if (rem <= 0) endSession();
+}
+
+// ===== 課題描画 =====
+function renderTask() {
+  const t = sess.tasks[sess.current];
+  const n = sess.current + 1;
+
+  document.getElementById('q-cur').textContent = n;
+  document.getElementById('q-ok').textContent = sess.correct;
+  document.getElementById('q-ng').textContent = sess.wrong;
+  document.getElementById('pbar').style.width = ((n-1)/sess.count*100)+'%';
+
+  // 回答軸バナー
+  const banner = document.getElementById('mode-banner');
+  if (t.ansAxis === 'normal') {
+    banner.className = 'mode-banner normal';
+    banner.textContent = t.taskType === 'color' ? '🎨 色を答えてください' : '📍 位置を答えてください';
+  } else {
+    banner.className = 'mode-banner reverse';
+    banner.textContent = '💡 文字の意味を答えてください';
+  }
+
+  // 一致条件バッジ
+  document.getElementById('match-badge').style.display = t.isMatch ? '' : 'none';
+
+  // 刺激表示
+  const isColor = t.taskType === 'color';
+  document.getElementById('color-disp').style.display = isColor ? '' : 'none';
+  document.getElementById('pos-disp').style.display = isColor ? 'none' : '';
+
+  if (isColor) {
+    const el = document.getElementById('color-word');
+    el.textContent = dispLabel(t.word);
+    el.style.color = COLOR_CSS[t.displayColor];
+  } else {
+    const el = document.getElementById('pos-word');
+    el.textContent = dispLabel(t.word);
+    el.style.left = POS_CSS[t.displayPos];
+    el.style.fontSize = cfg.charType === 'hira' ? '36px' : '62px';
+  }
+
+  // 質問文
+  const qEl = document.getElementById('q-text');
+  if (t.ansAxis === 'normal') {
+    qEl.innerHTML = isColor ? '文字の<strong>色</strong>は？' : '文字は<strong>どの位置</strong>？';
+  } else {
+    qEl.innerHTML = '文字の<strong>意味</strong>（読み方）は？';
+  }
+
+  // 回答UI
+  const isTh = sess.ansMode === 'therapist';
+  const isReverse = t.ansAxis === 'reverse';
+
+  document.getElementById('ans-color').style.display        = (!isTh && isColor && !isReverse) ? '' : 'none';
+  document.getElementById('ans-pos').style.display          = (!isTh && !isColor && !isReverse) ? '' : 'none';
+  document.getElementById('ans-meaning-color').style.display = (!isTh && isColor && isReverse) ? '' : 'none';
+  document.getElementById('ans-meaning-pos').style.display   = (!isTh && !isColor && isReverse) ? '' : 'none';
+  document.getElementById('th-area').style.display          = isTh ? '' : 'none';
+
+  if (!isTh) {
+    // 選択肢を決定（色課題→色4択、位置課題→位置3択）
+    // 逆条件でも答えるのは意味（色or位置の語）なので選択肢は同じ
+    const colorChoices = [...getColors()];
+    const posChoices = [...getPositions()];
+    if (cfg.shuffle) {
+      shuffleArr(colorChoices);
+      shuffleArr(posChoices);
+    }
+
+    if (isColor) {
+      const targetId = isReverse ? 'ans-meaning-color' : 'ans-color';
+      document.getElementById(targetId).innerHTML = colorChoices.map(c =>
+        `<button class="ans-btn" data-c="${c}" onclick="onAns('${c}')"
+          style="border-color:${COLOR_CSS[c]};color:${COLOR_CSS[c]};
+          font-size:${cfg.charType==='hira'?'16px':'22px'};">${dispLabel(c)}</button>`
+      ).join('');
+    } else {
+      const targetId = isReverse ? 'ans-meaning-pos' : 'ans-pos';
+      document.getElementById(targetId).innerHTML = posChoices.map(p =>
+        `<button class="ans-btn" onclick="onAns('${p}')"
+          style="font-size:${cfg.charType==='hira'?'14px':'22px'};">${dispLabel(p)}</button>`
+      ).join('');
+    }
+  }
+
+  if (isTh) document.getElementById('th-hint').textContent = t.correct;
+}
+
+// ===== 回答処理 =====
+function onAns(ans) {
+  const t = sess.tasks[sess.current];
+  let isOk;
+  if (ans === '__ok__') isOk = true;
+  else if (ans === '__ng__') isOk = false;
+  else isOk = (ans === t.correct);
+
+  // 内訳キー：taskType × ansAxis × isMatch
+  const bdKey = `${t.taskType}_${t.ansAxis}_${t.isMatch ? 'match' : 'diff'}`;
+  if (!sess.bd[bdKey]) sess.bd[bdKey] = { total:0, correct:0 };
+  sess.bd[bdKey].total++;
+  if (isOk) { sess.correct++; sess.bd[bdKey].correct++; }
+  else sess.wrong++;
+
+  showFeedback(isOk);
+
+  setTimeout(() => {
+    if (t.switchAfter) {
+      // 回答軸切替アラートを表示
+      showSwitchAlert(t.nextAxis, t.taskType, () => nextTask());
+    } else {
+      nextTask();
+    }
+  }, 280);
+}
+
+function nextTask() {
+  sess.current++;
+  if (sess.current >= sess.tasks.length) endSession();
+  else renderTask();
+}
+
+// ===== 切替アラート =====
+function showSwitchAlert(nextAxis, taskType, cb) {
+  const isColor = taskType === 'color';
+  let nextLabel;
+  if (nextAxis === 'normal') {
+    nextLabel = isColor ? '🎨 <strong>色</strong>を答えてください' : '📍 <strong>位置</strong>を答えてください';
+  } else {
+    nextLabel = '💡 文字の<strong>意味</strong>を答えてください';
+  }
+  document.getElementById('switch-body').innerHTML =
+    `次からは…<br><span style="font-size:20px;">${nextLabel}</span>`;
+  const alertEl = document.getElementById('switch-alert');
+  alertEl.classList.add('show');
+  document.getElementById('switch-ok-btn').onclick = () => {
+    alertEl.classList.remove('show');
+    cb();
+  };
+}
+
+function showFeedback(ok) {
+  const el = document.getElementById('feedback');
+  el.textContent = ok ? '✅' : '❌';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 250);
+}
+
+// ===== セッション終了 =====
+function endSession() {
+  if (timerIv) { clearInterval(timerIv); timerIv = null; }
+  const elapsed = Math.round((Date.now() - startTime) / 1000);
+  const total = sess.correct + sess.wrong;
+  const rate = total > 0 ? Math.round(sess.correct / total * 100) : 0;
+
+  document.getElementById('res-rate').textContent = rate + '%';
+  document.getElementById('res-ok').textContent = sess.correct;
+  document.getElementById('res-ng').textContent = sess.wrong;
+  document.getElementById('res-t').textContent = elapsed + 's';
+
+  // 内訳表示
+  const nameMap = {
+    'color_normal_diff': '色課題・通常（干渉あり）',
+    'color_normal_match': '色課題・通常（一致）',
+    'color_reverse_diff': '色課題・逆条件（干渉あり）',
+    'color_reverse_match': '色課題・逆条件（一致）',
+    'position_normal_diff': '位置課題・通常（干渉あり）',
+    'position_normal_match': '位置課題・通常（一致）',
+    'position_reverse_diff': '位置課題・逆条件（干渉あり）',
+    'position_reverse_match': '位置課題・逆条件（一致）',
+  };
+  const bdHtml = Object.entries(sess.bd).map(([k,v]) =>
+    `<div class="bd-row">
+      <span class="bd-lbl">${nameMap[k]||k}</span>
+      <span class="bd-val">${v.correct}/${v.total}問</span>
+    </div>`
+  ).join('');
+  document.getElementById('breakdown').innerHTML = bdHtml || '<div class="bd-row"><span class="bd-lbl">記録なし</span></div>';
+
+  saveHist({ date:new Date().toISOString(), rate, correct:sess.correct,
+    wrong:sess.wrong, total, elapsed, bd:sess.bd, taskType:cfg.taskType,
+    ansAxis:cfg.ansAxis, ansMode:sess.ansMode });
+
+  showScreen('screen-result');
+  document.getElementById('btn-setup').style.display = 'none';
+}
+
+document.getElementById('btn-abort').addEventListener('click', () => {
+  if (confirm('セッションを終了しますか？')) endSession();
+});
+document.getElementById('btn-abort').addEventListener('touchstart', function() {
+  this.style.borderColor = 'var(--warn)'; this.style.color = 'var(--warn)';
+}, {passive:true});
+document.getElementById('btn-abort').addEventListener('touchend', function() {
+  this.style.borderColor = ''; this.style.color = '';
+}, {passive:true});
+
+// ===== 画面遷移 =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const el = document.getElementById(id);
+  el.style.display = 'flex';
+  el.classList.add('active');
+}
+function goSetup() {
+  showScreen('screen-setup');
+  document.getElementById('btn-setup').style.display = 'none';
+}
+function goHistory() { renderHist(); showScreen('screen-history'); }
+document.getElementById('btn-hist').addEventListener('click', goHistory);
+document.getElementById('btn-setup').addEventListener('click', goSetup);
+
+// ===== 履歴 =====
+const SK = 'stroop_v3';
+function saveHist(r) {
+  let list = getHist(); list.unshift(r);
+  if (list.length > 30) list = list.slice(0,30);
+  localStorage.setItem(SK, JSON.stringify(list));
+}
+function getHist() {
+  try { return JSON.parse(localStorage.getItem(SK)) || []; } catch { return []; }
+}
+function clearHist() {
+  if (confirm('履歴を全削除しますか？')) { localStorage.removeItem(SK); renderHist(); }
+}
+function renderHist() {
+  const list = getHist();
+  const el = document.getElementById('hist-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">まだ記録がありません</div>'; return; }
+  const axisName = { normal:'通常', reverse:'逆条件', random:'ランダム切替' };
+  el.innerHTML = list.map(r => {
+    const d = new Date(r.date);
+    const ds = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const modeStr = r.ansMode === 'therapist' ? 'ST代行' : 'タップ';
+    const axisStr = axisName[r.ansAxis] || r.ansAxis;
+    const typeStr = r.taskType === 'color' ? '色課題' : '位置課題';
+    return `<div class="hist-card">
+      <div class="hist-top">
+        <div class="hist-date">${ds}　${typeStr}・${axisStr}・${modeStr}</div>
+        <div class="hist-pct">${r.rate}%</div>
+      </div>
+      <div class="hist-detail">正解 ${r.correct}/${r.total}問　${r.elapsed}秒</div>
+    </div>`;
+  }).join('');
+// ===== Service Worker登録 =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
+</script>
+</body>
+</html>
