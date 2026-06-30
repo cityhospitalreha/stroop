@@ -10,332 +10,228 @@
 <title>Stroop訓練</title>
 <style>
 :root {
-  --bg:#0d1117; --surface:#161b22; --surface2:#21262d; --border:#30363d;
-  --text:#e6edf3; --sub:#8b949e;
-  --accent:#58a6ff; --green:#3fb950; --warn:#f85149;
+  --bg:#0d1117; --sf:#161b22; --sf2:#21262d; --bd:#30363d;
+  --tx:#e6edf3; --sub:#8b949e;
+  --ac:#58a6ff; --gn:#3fb950; --wn:#f85149;
   --red:#ff6b6b; --blue:#58a6ff; --grn:#3fb950; --ylw:#e3b341;
 }
-* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
-html, body { height:100%; }
-body {
-  background:var(--bg); color:var(--text);
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{height:100%;}
+body{
+  background:var(--bg);color:var(--tx);
   font-family:'Hiragino Sans','Noto Sans JP',sans-serif;
-  display:flex; flex-direction:column;
-  height:100dvh; overflow:hidden;
+  height:100dvh;display:flex;flex-direction:column;overflow:hidden;
 }
 
 /* ヘッダー */
-#hdr {
-  flex-shrink:0;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:14px 20px;
-  background:var(--surface); border-bottom:1px solid var(--border);
+#hdr{
+  flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;background:var(--sf);border-bottom:1px solid var(--bd);
 }
-#hdr h1 { font-size:17px; font-weight:700; }
-#hdr-btns { display:flex; gap:8px; }
+#hdr h1{font-size:17px;font-weight:700;}
+.hBtns{display:flex;gap:8px;}
+.iBtn{
+  background:var(--sf2);border:1px solid var(--bd);color:var(--tx);
+  border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;
+}
+.iBtn:active{background:var(--bd);}
 
-/* 画面コンテナ */
-#screens { flex:1; overflow:hidden; position:relative; }
-
-/* 各画面：非表示がデフォルト */
-.pg {
-  position:absolute; inset:0;
-  display:flex; flex-direction:column;
-  overflow-y:auto; overflow-x:hidden;
-  visibility:hidden; pointer-events:none;
-}
-.pg.show {
-  visibility:visible; pointer-events:auto;
-}
-
-/* ===== 共通部品 ===== */
-.iBtn {
-  background:var(--surface2); border:1px solid var(--border); color:var(--text);
-  border-radius:8px; padding:7px 12px; font-size:13px;
-  cursor:pointer; font-family:inherit;
-}
-.iBtn:active { background:var(--border); }
-
-.slabel {
-  font-size:11px; font-weight:700; color:var(--sub);
-  letter-spacing:.1em; text-transform:uppercase;
-  margin-bottom:8px; padding:0 20px;
-}
-.card {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:12px; padding:16px; margin:0 20px;
-}
-
-/* ラジオボタン */
-.rGroup { display:flex; flex-direction:column; gap:8px; }
-.rBtn {
-  display:flex; align-items:center; gap:12px;
-  padding:12px 14px;
-  background:var(--surface2); border:1.5px solid var(--border); border-radius:10px;
-  color:var(--text); font-family:inherit; cursor:pointer; text-align:left;
-  width:100%;
-}
-.rBtn.on { background:rgba(88,166,255,.12); border-color:var(--accent); }
-.rBtn:active { opacity:.7; }
-.rDot {
-  width:16px; height:16px; border-radius:50%;
-  border:2px solid var(--border); flex-shrink:0;
-}
-.rBtn.on .rDot { border-color:var(--accent); background:var(--accent); }
-.rMain { font-size:14px; font-weight:600; }
-.rSub { font-size:12px; color:var(--sub); margin-top:2px; }
-
-/* チェックボックス */
-.ckRow {
-  display:flex; align-items:center; gap:12px;
-  padding:12px 14px;
-  background:var(--surface2); border:1.5px solid var(--border); border-radius:10px;
-  color:var(--text); font-family:inherit; cursor:pointer;
-  width:100%;
-}
-.ckRow.on { background:rgba(63,185,80,.1); border-color:var(--green); }
-.ckBox {
-  width:20px; height:20px; border-radius:5px;
-  border:2px solid var(--border); flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:13px; color:#fff;
-}
-.ckRow.on .ckBox { border-color:var(--green); background:var(--green); }
-
-/* 数値入力行 */
-.numRow {
-  display:flex; align-items:center; gap:12px; padding:4px 0;
-}
-.numRow label { font-size:14px; color:var(--sub); flex:1; }
-.numRow input {
-  width:80px; padding:8px; background:var(--surface2);
-  border:1px solid var(--border); border-radius:8px;
-  color:var(--text); font-size:16px; text-align:center; font-family:inherit;
-}
-.numRow input:focus { outline:none; border-color:var(--accent); }
-.numRow span { font-size:13px; color:var(--sub); }
-
-/* スタートボタン */
-.startBtn {
-  width:100%; padding:18px;
-  background:var(--accent); border:none; border-radius:12px;
-  color:#0d1117; font-size:18px; font-weight:800;
-  cursor:pointer; font-family:inherit;
-  margin:0 0 32px;
-}
-.startBtn:active { opacity:.8; }
+/* 画面管理：display:noneで完全に消す */
+.pg{display:none;flex-direction:column;flex:1;overflow:hidden;}
+.pg.on{display:flex;}
 
 /* ===== 設定画面 ===== */
-#pg-setup { gap:14px; padding-top:20px; }
+#pg-setup{overflow-y:auto;gap:14px;padding:20px 0 40px;}
+.slabel{
+  font-size:11px;font-weight:700;color:var(--sub);
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:0 20px;margin-bottom:6px;
+}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:16px;margin:0 20px;}
+.rGroup{display:flex;flex-direction:column;gap:8px;}
+.rBtn{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--sf2);border:1.5px solid var(--bd);border-radius:10px;
+  color:var(--tx);font-family:inherit;cursor:pointer;text-align:left;width:100%;
+}
+.rBtn.on{background:rgba(88,166,255,.12);border-color:var(--ac);}
+.rBtn:active{opacity:.7;}
+.rDot{width:16px;height:16px;border-radius:50%;border:2px solid var(--bd);flex-shrink:0;}
+.rBtn.on .rDot{border-color:var(--ac);background:var(--ac);}
+.rMain{font-size:14px;font-weight:600;}
+.rSub{font-size:12px;color:var(--sub);margin-top:2px;}
+.ckRow{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--sf2);border:1.5px solid var(--bd);border-radius:10px;
+  color:var(--tx);font-family:inherit;cursor:pointer;width:100%;
+}
+.ckRow.on{background:rgba(63,185,80,.1);border-color:var(--gn);}
+.ckBox{
+  width:20px;height:20px;border-radius:5px;border:2px solid var(--bd);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:#fff;
+}
+.ckRow.on .ckBox{border-color:var(--gn);background:var(--gn);}
+.numRow{display:flex;align-items:center;gap:12px;padding:4px 0;}
+.numRow label{font-size:14px;color:var(--sub);flex:1;}
+.numRow input{
+  width:80px;padding:8px;background:var(--sf2);border:1px solid var(--bd);
+  border-radius:8px;color:var(--tx);font-size:16px;text-align:center;font-family:inherit;
+}
+.numRow input:focus{outline:none;border-color:var(--ac);}
+.numRow span{font-size:13px;color:var(--sub);}
+.startBtn{
+  width:100%;padding:18px;background:var(--ac);border:none;border-radius:12px;
+  color:#0d1117;font-size:18px;font-weight:800;cursor:pointer;font-family:inherit;
+}
+.startBtn:active{opacity:.8;}
 
 /* ===== セッション画面 ===== */
-#pg-session { overflow:hidden; }
-
-.sHdr {
-  flex-shrink:0;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:10px 16px;
-  background:var(--surface); border-bottom:1px solid var(--border);
-  gap:10px;
+#pg-session{overflow:hidden;}
+.sHdr{
+  flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:var(--sf);border-bottom:1px solid var(--bd);gap:10px;
 }
-.progInfo { display:flex; gap:14px; font-size:13px; color:var(--sub); }
-.progInfo strong { color:var(--text); font-size:15px; }
-.timerDisp {
-  font-size:20px; font-weight:800; color:var(--accent);
-  font-variant-numeric:tabular-nums; min-width:50px; text-align:right;
-}
-.timerDisp.warn { color:var(--warn); }
+.progInfo{display:flex;gap:14px;font-size:13px;color:var(--sub);}
+.progInfo strong{color:var(--tx);font-size:15px;}
+.timerDisp{font-size:20px;font-weight:800;color:var(--ac);font-variant-numeric:tabular-nums;min-width:50px;text-align:right;}
+.timerDisp.warn{color:var(--wn);}
+.pbarWrap{height:3px;background:var(--sf2);flex-shrink:0;}
+.pbar{height:100%;background:var(--ac);transition:width .3s;}
 
-.pbarWrap { height:3px; background:var(--surface2); flex-shrink:0; }
-.pbar { height:100%; background:var(--accent); transition:width .3s; }
-
-.modeBanner {
-  flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  padding:8px 16px; font-size:13px; font-weight:700;
+/* ST代行○×バー（上部） */
+.stBar{
+  flex-shrink:0;display:none;
+  grid-template-columns:1fr 1fr;gap:10px;
+  padding:10px 16px;background:var(--sf);border-bottom:1px solid var(--bd);
 }
-.modeBanner.normal { background:rgba(88,166,255,.1); color:var(--accent); }
-.modeBanner.reverse { background:rgba(63,185,80,.1); color:var(--green); }
+.stBar.on{display:grid;}
+.stO{
+  padding:18px;border-radius:12px;font-size:36px;font-weight:900;
+  background:rgba(63,185,80,.15);border:2px solid var(--gn);color:var(--gn);
+  cursor:pointer;font-family:inherit;
+}
+.stX{
+  padding:18px;border-radius:12px;font-size:36px;font-weight:900;
+  background:rgba(248,81,73,.15);border:2px solid var(--wn);color:var(--wn);
+  cursor:pointer;font-family:inherit;
+}
+.stO:active{background:rgba(63,185,80,.4);}
+.stX:active{background:rgba(248,81,73,.4);}
 
 /* 課題エリア */
-.taskArea {
-  flex:1;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  padding:16px; gap:56px;
-  position:relative; overflow:hidden;
+.taskArea{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:20px;gap:56px;position:relative;overflow:hidden;
 }
-
-.matchBadge {
-  position:absolute; top:10px; right:14px;
-  font-size:11px; font-weight:700;
-  background:rgba(227,179,65,.15); color:var(--ylw);
-  border:1px solid rgba(227,179,65,.4); border-radius:20px; padding:3px 10px;
+.matchBadge{
+  position:absolute;top:10px;right:14px;
+  font-size:11px;font-weight:700;
+  background:rgba(227,179,65,.15);color:var(--ylw);
+  border:1px solid rgba(227,179,65,.4);border-radius:20px;padding:3px 10px;
 }
-
-.colorWord {
-  font-size:82px; font-weight:900; line-height:1;
-  letter-spacing:-.02em; text-shadow:0 2px 16px rgba(0,0,0,.5);
+.colorWord{
+  font-size:82px;font-weight:900;line-height:1;
+  letter-spacing:-.02em;text-shadow:0 2px 16px rgba(0,0,0,.5);
 }
-.posDisp {
-  width:100%; height:140px; position:relative;
-  display:flex; align-items:center;
+.posDisp{width:100%;height:140px;position:relative;display:flex;align-items:center;}
+.posWord{font-size:62px;font-weight:900;color:var(--tx);position:absolute;}
+.qText{font-size:15px;color:var(--sub);text-align:center;line-height:1.5;}
+.qText strong{color:var(--tx);font-size:17px;}
+.ansGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:380px;}
+.posAnsGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:380px;}
+.ansBtn{
+  padding:20px 8px;border-radius:12px;border:2px solid var(--bd);
+  background:var(--sf2);font-size:22px;font-weight:800;color:var(--tx);
+  cursor:pointer;font-family:inherit;
 }
-.posWord {
-  font-size:62px; font-weight:900; color:var(--text);
-  position:absolute;
-}
-
-.qText { font-size:15px; color:var(--sub); text-align:center; line-height:1.5; }
-.qText strong { color:var(--text); font-size:17px; }
-
-/* 回答ボタングリッド */
-.ansGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:380px; }
-.posAnsGrid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; width:100%; max-width:380px; }
-.ansBtn {
-  padding:20px 8px; border-radius:12px;
-  border:2px solid var(--border); background:var(--surface2);
-  font-size:22px; font-weight:800; color:var(--text);
-  cursor:pointer; font-family:inherit;
-}
-.ansBtn:active { opacity:.7; transform:scale(.95); }
-
-/* ST代行 */
-.thArea { display:flex; flex-direction:column; align-items:center; gap:10px; width:100%; max-width:380px; }
-.thHint {
-  font-size:13px; color:var(--sub);
-  background:var(--surface2); border:1px solid var(--border);
-  border-radius:8px; padding:8px 16px;
-}
-.thBtns { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
-.thOk {
-  padding:22px; border-radius:12px; font-size:20px; font-weight:800;
-  background:rgba(63,185,80,.15); border:2px solid var(--green); color:var(--green);
-  cursor:pointer; font-family:inherit;
-}
-.thNg {
-  padding:22px; border-radius:12px; font-size:20px; font-weight:800;
-  background:rgba(248,81,73,.15); border:2px solid var(--warn); color:var(--warn);
-  cursor:pointer; font-family:inherit;
-}
-.thOk:active, .thNg:active { opacity:.7; }
+.ansBtn:active{opacity:.7;transform:scale(.95);}
 
 /* 切替アラート */
-.switchAlert {
-  position:absolute; inset:0;
-  background:rgba(13,17,23,.93);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:14px; padding:30px; z-index:30;
-  visibility:hidden; pointer-events:none;
+.swAlert{
+  position:absolute;inset:0;background:rgba(13,17,23,.93);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:30px;z-index:30;
 }
-.switchAlert.show { visibility:visible; pointer-events:auto; }
-.switchOk {
-  padding:14px 48px; background:var(--accent); border:none; border-radius:10px;
-  color:#0d1117; font-size:16px; font-weight:800;
-  cursor:pointer; font-family:inherit; margin-top:4px;
+.swAlert.on{display:flex;}
+.swOk{
+  padding:14px 48px;background:var(--ac);border:none;border-radius:10px;
+  color:#0d1117;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:4px;
 }
-.switchOk:active { opacity:.8; }
+.swOk:active{opacity:.8;}
 
 /* フィードバック */
-.fbk {
-  position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:80px; pointer-events:none;
-  opacity:0; transition:opacity .15s; z-index:10;
+.fbk{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:80px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;
 }
-.fbk.show { opacity:1; }
+.fbk.on{opacity:1;}
 
 /* 終了ボタン */
-.abortWrap { padding:0 20px 28px; flex-shrink:0; }
-.abortBtn {
-  width:100%; padding:13px;
-  background:none; border:1.5px solid var(--border); border-radius:10px;
-  color:var(--sub); font-size:14px; font-weight:600;
-  cursor:pointer; font-family:inherit;
+.abortWrap{padding:0 20px 28px;flex-shrink:0;}
+.abortBtn{
+  width:100%;padding:13px;background:none;
+  border:1.5px solid var(--bd);border-radius:10px;
+  color:var(--sub);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
 }
-.abortBtn:active { border-color:var(--warn); color:var(--warn); }
+.abortBtn:active{border-color:var(--wn);color:var(--wn);}
 
 /* ===== 結果画面 ===== */
-#pg-result { padding:20px; gap:14px; }
-.resHero {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:16px; padding:28px 20px; text-align:center;
-}
-.resScore { font-size:64px; font-weight:900; color:var(--accent); line-height:1; }
-.resLbl { font-size:14px; color:var(--sub); margin-top:6px; }
-.resMeta { display:flex; justify-content:center; gap:32px; margin-top:20px; }
-.resMi .val { font-size:28px; font-weight:800; text-align:center; }
-.resMi .lbl { font-size:12px; color:var(--sub); margin-top:2px; text-align:center; }
-.breakdown {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:12px; overflow:hidden;
-}
-.bdRow {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:13px 16px; border-bottom:1px solid var(--border); font-size:14px;
-}
-.bdRow:last-child { border-bottom:none; }
-.bdRow .lbl { color:var(--sub); }
-.bdRow .val { font-weight:700; }
-.resBtns { display:flex; gap:10px; }
-.resBtns button {
-  flex:1; padding:15px; border-radius:12px;
-  font-size:15px; font-weight:700; cursor:pointer; font-family:inherit;
-}
-.resBtns button:active { opacity:.7; }
-.btnRetry { background:var(--accent); border:none; color:#0d1117; }
-.btnHist { background:var(--surface2); border:1px solid var(--border); color:var(--text); }
+#pg-result{overflow-y:auto;padding:20px;gap:14px;}
+.resHero{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:28px 20px;text-align:center;}
+.resScore{font-size:64px;font-weight:900;color:var(--ac);line-height:1;}
+.resLbl{font-size:14px;color:var(--sub);margin-top:6px;}
+.resMeta{display:flex;justify-content:center;gap:32px;margin-top:20px;}
+.resMi .val{font-size:28px;font-weight:800;text-align:center;}
+.resMi .lbl{font-size:12px;color:var(--sub);margin-top:2px;text-align:center;}
+.bdown{background:var(--sf);border:1px solid var(--bd);border-radius:12px;overflow:hidden;}
+.bdRow{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--bd);font-size:14px;}
+.bdRow:last-child{border-bottom:none;}
+.bdRow .lb{color:var(--sub);}
+.bdRow .vl{font-weight:700;}
+.resBtns{display:flex;gap:10px;}
+.resBtns button{flex:1;padding:15px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+.resBtns button:active{opacity:.7;}
+.btnR{background:var(--ac);border:none;color:#0d1117;}
+.btnH{background:var(--sf2);border:1px solid var(--bd);color:var(--tx);}
 
 /* ===== 履歴画面 ===== */
-#pg-hist { padding:20px; gap:14px; }
-.histHdr { display:flex; justify-content:space-between; align-items:center; }
-.histTitle { font-size:16px; font-weight:700; }
-.histClear {
-  background:none; border:1px solid var(--warn); color:var(--warn);
-  border-radius:8px; padding:6px 14px; font-size:12px;
-  cursor:pointer; font-family:inherit;
-}
-.histList { display:flex; flex-direction:column; gap:10px; }
-.histCard {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:12px; padding:14px 16px;
-}
-.histTop { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-.histDate { font-size:12px; color:var(--sub); }
-.histPct { font-size:20px; font-weight:800; color:var(--accent); }
-.histDetail { font-size:13px; color:var(--sub); line-height:1.8; }
-.empty { text-align:center; padding:60px 20px; color:var(--sub); font-size:14px; }
+#pg-hist{overflow-y:auto;padding:20px;gap:14px;}
+.histHdr{display:flex;justify-content:space-between;align-items:center;}
+.histTitle{font-size:16px;font-weight:700;}
+.histClr{background:none;border:1px solid var(--wn);color:var(--wn);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;}
+.histList{display:flex;flex-direction:column;gap:10px;}
+.histCard{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;}
+.histTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.histDate{font-size:12px;color:var(--sub);}
+.histPct{font-size:20px;font-weight:800;color:var(--ac);}
+.histDtl{font-size:13px;color:var(--sub);line-height:1.8;}
+.empty{text-align:center;padding:60px 20px;color:var(--sub);font-size:14px;}
 </style>
 </head>
 <body>
 
-<!-- ヘッダー -->
 <div id="hdr">
   <h1>🧠 Stroop訓練</h1>
-  <div id="hdr-btns">
+  <div class="hBtns">
     <button class="iBtn" id="btn-hist">履歴</button>
     <button class="iBtn" id="btn-setup" style="display:none">設定</button>
   </div>
 </div>
 
-<!-- 画面コンテナ -->
-<div id="screens">
-
-<!-- ① 設定画面 -->
-<div class="pg show" id="pg-setup">
-
+<!-- ① 設定 -->
+<div class="pg on" id="pg-setup">
   <div class="slabel">課題タイプ</div>
   <div class="card">
     <div class="rGroup" id="rg-task">
       <button class="rBtn on" data-val="color">
         <div class="rDot"></div>
-        <div><div class="rMain">色 × 文字</div>
-        <div class="rSub">「赤」という文字が青色で表示される</div></div>
+        <div><div class="rMain">色 × 文字</div><div class="rSub">「赤」という文字が青色で表示される</div></div>
       </button>
       <button class="rBtn" data-val="position">
         <div class="rDot"></div>
-        <div><div class="rMain">位置 × 文字</div>
-        <div class="rSub">「右」という文字が左端に表示される</div></div>
+        <div><div class="rMain">位置 × 文字</div><div class="rSub">「右」という文字が左端に表示される</div></div>
       </button>
     </div>
   </div>
@@ -345,34 +241,29 @@ body {
     <div class="rGroup" id="rg-char">
       <button class="rBtn on" data-val="kanji">
         <div class="rDot"></div>
-        <div><div class="rMain">漢字</div>
-        <div class="rSub">赤・青・緑・黄　／　右・中・左</div></div>
+        <div><div class="rMain">漢字</div><div class="rSub">赤・青・緑・黄　／　右・中・左</div></div>
       </button>
       <button class="rBtn" data-val="hira">
         <div class="rDot"></div>
-        <div><div class="rMain">ひらがな</div>
-        <div class="rSub">あか・あお・みどり・きいろ　／　みぎ・なか・ひだり</div></div>
+        <div><div class="rMain">ひらがな</div><div class="rSub">あか・あお・みどり・きいろ　／　みぎ・なか・ひだり</div></div>
       </button>
     </div>
   </div>
 
-  <div class="slabel">回答軸（何を答えるか）</div>
+  <div class="slabel">回答軸</div>
   <div class="card">
     <div class="rGroup" id="rg-axis">
       <button class="rBtn on" data-val="normal">
         <div class="rDot"></div>
-        <div><div class="rMain">通常条件</div>
-        <div class="rSub">色課題→色を答える　位置課題→位置を答える</div></div>
+        <div><div class="rMain">通常条件</div><div class="rSub">色課題→色を答える　位置課題→位置を答える</div></div>
       </button>
       <button class="rBtn" data-val="reverse">
         <div class="rDot"></div>
-        <div><div class="rMain">逆条件</div>
-        <div class="rSub">色課題→意味を答える　位置課題→意味を答える</div></div>
+        <div><div class="rMain">逆条件</div><div class="rSub">色課題→意味を答える　位置課題→意味を答える</div></div>
       </button>
       <button class="rBtn" data-val="random">
         <div class="rDot"></div>
-        <div><div class="rMain">ランダム切替</div>
-        <div class="rSub">通常と逆がセッション中にランダムで切り替わる</div></div>
+        <div><div class="rMain">ランダム切替</div><div class="rSub">通常と逆がセッション中にランダムで切り替わる</div></div>
       </button>
     </div>
   </div>
@@ -381,10 +272,7 @@ body {
   <div class="card">
     <button class="ckRow on" id="ck-match">
       <div class="ckBox">✓</div>
-      <div>
-        <div class="rMain">たまに混ぜる（約20%）</div>
-        <div class="rSub">刺激にギャップなし。回答軸はそのまま継続。</div>
-      </div>
+      <div><div class="rMain">たまに混ぜる（約20%）</div><div class="rSub">刺激にギャップなし。回答軸はそのまま継続。</div></div>
     </button>
   </div>
 
@@ -392,10 +280,7 @@ body {
   <div class="card">
     <button class="ckRow on" id="ck-shuffle">
       <div class="ckBox">✓</div>
-      <div>
-        <div class="rMain">毎回シャッフル</div>
-        <div class="rSub">正解ボタンの位置が毎回変わる</div>
-      </div>
+      <div><div class="rMain">毎回シャッフル</div><div class="rSub">正解ボタンの位置が毎回変わる</div></div>
     </button>
   </div>
 
@@ -404,13 +289,11 @@ body {
     <div class="rGroup" id="rg-mode">
       <button class="rBtn on" data-val="tap">
         <div class="rDot"></div>
-        <div><div class="rMain">患者タップ</div>
-        <div class="rSub">患者自身がボタンを押して回答</div></div>
+        <div><div class="rMain">患者タップ</div><div class="rSub">患者自身がボタンを押して回答</div></div>
       </button>
       <button class="rBtn" data-val="therapist">
         <div class="rDot"></div>
-        <div><div class="rMain">ST/PT代行入力</div>
-        <div class="rSub">患者が口頭回答 → 療法士が正誤をタップ</div></div>
+        <div><div class="rMain">ST代行入力</div><div class="rSub">患者が口頭回答 → STが○×をタップ</div></div>
       </button>
     </div>
   </div>
@@ -432,10 +315,9 @@ body {
   <div style="padding:0 20px;">
     <button class="startBtn" id="btn-start">スタート</button>
   </div>
+</div>
 
-</div><!-- /pg-setup -->
-
-<!-- ② セッション画面 -->
+<!-- ② セッション -->
 <div class="pg" id="pg-session">
   <div class="sHdr">
     <div class="progInfo">
@@ -444,10 +326,17 @@ body {
       <div>❌<strong id="q-ng">0</strong></div>
     </div>
     <div class="timerDisp" id="timer" style="display:none">60</div>
+    <button class="iBtn" id="btn-abort-hdr" style="font-size:12px;">終了</button>
   </div>
   <div class="pbarWrap"><div class="pbar" id="pbar" style="width:0%"></div></div>
 
-  <div class="taskArea" id="task-area">
+  <!-- ST代行○×バー -->
+  <div class="stBar" id="st-bar">
+    <button class="stO" id="st-ok">○</button>
+    <button class="stX" id="st-ng">✕</button>
+  </div>
+
+  <div class="taskArea">
     <div class="matchBadge" id="match-badge" style="display:none">✅ 一致</div>
 
     <div id="color-disp" style="display:none">
@@ -459,25 +348,17 @@ body {
 
     <div class="qText" id="q-text"></div>
 
-    <div class="ansGrid"    id="ans-color"         style="display:none"></div>
-    <div class="posAnsGrid" id="ans-pos"            style="display:none"></div>
-    <div class="ansGrid"    id="ans-meaning-color"  style="display:none"></div>
-    <div class="posAnsGrid" id="ans-meaning-pos"    style="display:none"></div>
-
-    <div class="thArea" id="th-area" style="display:none">
-      <div class="thHint">正解：「<span id="th-hint">？</span>」</div>
-      <div class="thBtns">
-        <button class="thOk" id="th-ok">✓ 正解</button>
-        <button class="thNg" id="th-ng">✗ 誤答</button>
-      </div>
-    </div>
+    <div class="ansGrid"    id="ans-c"  style="display:none"></div>
+    <div class="posAnsGrid" id="ans-p"  style="display:none"></div>
+    <div class="ansGrid"    id="ans-mc" style="display:none"></div>
+    <div class="posAnsGrid" id="ans-mp" style="display:none"></div>
 
     <!-- 切替アラート -->
-    <div class="switchAlert" id="switch-alert">
+    <div class="swAlert" id="sw-alert">
       <div style="font-size:52px">🔄</div>
       <div style="font-size:22px;font-weight:800">条件切替！</div>
-      <div id="switch-body" style="font-size:15px;color:var(--sub);text-align:center;line-height:1.7;"></div>
-      <button class="switchOk" id="switch-ok">わかった、続ける</button>
+      <div id="sw-body" style="font-size:15px;color:var(--sub);text-align:center;line-height:1.7;"></div>
+      <button class="swOk" id="sw-ok">わかった、続ける</button>
     </div>
 
     <div class="fbk" id="fbk"></div>
@@ -486,9 +367,9 @@ body {
   <div class="abortWrap">
     <button class="abortBtn" id="btn-abort">セッションを終了する</button>
   </div>
-</div><!-- /pg-session -->
+</div>
 
-<!-- ③ 結果画面 -->
+<!-- ③ 結果 -->
 <div class="pg" id="pg-result">
   <div class="resHero">
     <div class="resScore" id="res-rate">—</div>
@@ -499,133 +380,94 @@ body {
       <div class="resMi"><div class="val" id="res-t">—</div><div class="lbl">所要時間</div></div>
     </div>
   </div>
-  <div class="breakdown" id="breakdown"></div>
+  <div class="bdown" id="bdown"></div>
   <div class="resBtns">
-    <button class="btnRetry" onclick="goSetup()">もう一度</button>
-    <button class="btnHist" onclick="goHistory()">履歴を見る</button>
+    <button class="btnR" onclick="goSetup()">もう一度</button>
+    <button class="btnH" onclick="goHistory()">履歴を見る</button>
   </div>
 </div>
 
-<!-- ④ 履歴画面 -->
+<!-- ④ 履歴 -->
 <div class="pg" id="pg-hist">
   <div class="histHdr">
     <div class="histTitle">📊 セッション履歴</div>
-    <button class="histClear" onclick="clearHist()">全削除</button>
+    <button class="histClr" onclick="clearHist()">全削除</button>
   </div>
   <div class="histList" id="hist-list"></div>
 </div>
 
-</div><!-- /screens -->
-
 <script>
 // ===== 定数 =====
-const COLORS_K   = ['赤','青','緑','黄'];
-const POSITIONS_K = ['左','中','右'];
-const HIRA = {'赤':'あか','青':'あお','緑':'みどり','黄':'きいろ','左':'ひだり','中':'なか','右':'みぎ'};
-const COLOR_CSS  = {'赤':'var(--red)','青':'var(--blue)','緑':'var(--grn)','黄':'var(--ylw)'};
-const POS_CSS    = {'左':'2%','中':'calc(50% - 35px)','右':'calc(98% - 70px)'};
+const CK = ['赤','青','緑','黄'];
+const PK = ['左','中','右'];
+const HR = {'赤':'あか','青':'あお','緑':'みどり','黄':'きいろ','左':'ひだり','中':'なか','右':'みぎ'};
+const CC = {'赤':'var(--red)','青':'var(--blue)','緑':'var(--grn)','黄':'var(--ylw)'};
+const PC = {'左':'2%','中':'calc(50% - 35px)','右':'calc(98% - 70px)'};
 
 // ===== 設定 =====
-const cfg = { task:'color', char:'kanji', axis:'normal', match:true, shuffle:true, mode:'tap' };
+const cfg = {task:'color',char:'kanji',axis:'normal',match:true,shuffle:true,mode:'tap'};
+const dp = k => cfg.char==='hira' ? HR[k] : k;
+const shu = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a; };
 
-function disp(k) { return cfg.char === 'hira' ? HIRA[k] : k; }
-function colors()    { return COLORS_K; }
-function positions() { return POSITIONS_K; }
-
-function shuffle(a) {
-  for (let i = a.length-1; i > 0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]] = [a[j],a[i]];
-  }
-  return a;
-}
-
-// ラジオグループ初期化
-function initRadio(id, key) {
-  document.querySelectorAll(`#${id} .rBtn`).forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll(`#${id} .rBtn`).forEach(b => b.classList.remove('on'));
-      btn.classList.add('on');
-      cfg[key] = btn.dataset.val;
+function initR(id,key){
+  document.querySelectorAll(`#${id} .rBtn`).forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll(`#${id} .rBtn`).forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); cfg[key]=b.dataset.val;
     });
   });
 }
-initRadio('rg-task', 'task');
-initRadio('rg-char', 'char');
-initRadio('rg-axis', 'axis');
-initRadio('rg-mode', 'mode');
+initR('rg-task','task'); initR('rg-char','char');
+initR('rg-axis','axis'); initR('rg-mode','mode');
 
-// チェックボックス
-function initCheck(id, key) {
-  const el = document.getElementById(id);
-  el.addEventListener('click', () => {
+['ck-match','ck-shuffle'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('click',()=>{
     el.classList.toggle('on');
-    cfg[key] = el.classList.contains('on');
+    cfg[id==='ck-match'?'match':'shuffle']=el.classList.contains('on');
   });
-}
-initCheck('ck-match',   'match');
-initCheck('ck-shuffle', 'shuffle');
+});
 
 // ===== 画面切替 =====
-function showPg(id) {
-  document.querySelectorAll('.pg').forEach(p => p.classList.remove('show'));
-  document.getElementById(id).classList.add('show');
+function showPg(id){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
 }
-function goSetup() {
-  document.getElementById('btn-setup').style.display = 'none';
-  showPg('pg-setup');
-}
-function goHistory() { renderHist(); showPg('pg-hist'); }
-
+function goSetup(){ document.getElementById('btn-setup').style.display='none'; showPg('pg-setup'); }
+function goHistory(){ renderHist(); showPg('pg-hist'); }
 document.getElementById('btn-hist').addEventListener('click', goHistory);
 document.getElementById('btn-setup').addEventListener('click', goSetup);
 
 // ===== 課題生成 =====
-function makeTask(axis, isMatch) {
-  const task = cfg.task;
-  if (task === 'color') {
-    const w = colors()[Math.floor(Math.random()*colors().length)];
-    const dc = isMatch ? w : (() => {
-      const o = colors().filter(c=>c!==w);
-      return o[Math.floor(Math.random()*o.length)];
-    })();
-    return { task, axis, isMatch, word:w, displayColor:dc, correct: axis==='normal'?dc:w };
+function makeTask(axis, isMatch){
+  if(cfg.task==='color'){
+    const w=CK[Math.floor(Math.random()*CK.length)];
+    const dc=isMatch?w:(()=>{const o=CK.filter(c=>c!==w);return o[Math.floor(Math.random()*o.length)];})();
+    return {task:'color',axis,isMatch,word:w,displayColor:dc,correct:axis==='normal'?dc:w};
   } else {
-    const w = positions()[Math.floor(Math.random()*positions().length)];
-    const dp = isMatch ? w : (() => {
-      const o = positions().filter(p=>p!==w);
-      return o[Math.floor(Math.random()*o.length)];
-    })();
-    return { task, axis, isMatch, word:w, displayPos:dp, correct: axis==='normal'?dp:w };
+    const w=PK[Math.floor(Math.random()*PK.length)];
+    const dp2=isMatch?w:(()=>{const o=PK.filter(p=>p!==w);return o[Math.floor(Math.random()*o.length)];})();
+    return {task:'position',axis,isMatch,word:w,displayPos:dp2,correct:axis==='normal'?dp2:w};
   }
 }
 
-function buildTasks(count) {
-  const tasks = [];
-  let curAxis = cfg.axis === 'random'
-    ? (Math.random()<.5?'normal':'reverse') : cfg.axis;
-
-  // ランダム切替ポイント
-  const switches = [];
-  if (cfg.axis === 'random') {
-    let i = 3 + Math.floor(Math.random()*5);
-    while (i < count-1) {
-      switches.push(i);
-      i += 4 + Math.floor(Math.random()*7);
-    }
+function buildTasks(count){
+  const tasks=[];
+  let cur=cfg.axis==='random'?(Math.random()<.5?'normal':'reverse'):cfg.axis;
+  const sw=[];
+  if(cfg.axis==='random'){
+    let i=3+Math.floor(Math.random()*5);
+    while(i<count-1){sw.push(i);i+=4+Math.floor(Math.random()*7);}
   }
-  let si = 0;
-
-  for (let i = 0; i < count; i++) {
-    const isMatch = cfg.match && Math.random() < .20;
-    const t = makeTask(curAxis, isMatch);
-    t.switchAfter = false; t.nextAxis = null;
-    if (si < switches.length && i === switches[si]) {
-      t.switchAfter = true;
-      const next = curAxis === 'normal' ? 'reverse' : 'normal';
-      t.nextAxis = next;
-      curAxis = next;
-      si++;
+  let si=0;
+  for(let i=0;i<count;i++){
+    const isM=cfg.match&&Math.random()<.2;
+    const t=makeTask(cur,isM);
+    t.swAfter=false; t.nextAxis=null;
+    if(si<sw.length&&i===sw[si]){
+      t.swAfter=true;
+      t.nextAxis=cur==='normal'?'reverse':'normal';
+      cur=t.nextAxis; si++;
     }
     tasks.push(t);
   }
@@ -633,219 +475,173 @@ function buildTasks(count) {
 }
 
 // ===== セッション =====
-let sess = {};
-let timerIv = null;
-let t0 = 0;
+let sess={};
+let tiv=null;
+let t0=0;
 
-document.getElementById('btn-start').addEventListener('click', () => {
-  const count = parseInt(document.getElementById('inp-count').value)||20;
-  const tlim  = parseInt(document.getElementById('inp-time').value)||0;
-  sess = { tasks:buildTasks(count), count, cur:0, ok:0, ng:0,
-           tlim, elapsed:0, bd:{} };
-  t0 = Date.now();
-
-  document.getElementById('btn-setup').style.display = '';
-  document.getElementById('q-tot').textContent = count;
-
-  const tel = document.getElementById('timer');
-  if (tlim > 0) {
-    tel.style.display = ''; tel.textContent = tlim; tel.classList.remove('warn');
-    timerIv = setInterval(tick, 1000);
-  } else { tel.style.display = 'none'; }
-
+document.getElementById('btn-start').addEventListener('click',()=>{
+  const count=parseInt(document.getElementById('inp-count').value)||20;
+  const tlim=parseInt(document.getElementById('inp-time').value)||0;
+  sess={tasks:buildTasks(count),count,cur:0,ok:0,ng:0,tlim,elapsed:0,bd:{}};
+  t0=Date.now();
+  document.getElementById('btn-setup').style.display='';
+  document.getElementById('q-tot').textContent=count;
+  const tel=document.getElementById('timer');
+  if(tlim>0){tel.style.display='';tel.textContent=tlim;tel.classList.remove('warn');tiv=setInterval(tick,1000);}
+  else tel.style.display='none';
   showPg('pg-session');
   renderTask();
 });
 
-function tick() {
+function tick(){
   sess.elapsed++;
-  const rem = sess.tlim - sess.elapsed;
-  const el = document.getElementById('timer');
-  el.textContent = rem;
-  if (rem <= 10) el.classList.add('warn');
-  if (rem <= 0) endSess();
+  const rem=sess.tlim-sess.elapsed;
+  const el=document.getElementById('timer');
+  el.textContent=rem;
+  if(rem<=10)el.classList.add('warn');
+  if(rem<=0)endSess();
 }
 
 // ===== 課題描画 =====
-function renderTask() {
-  const t = sess.tasks[sess.cur];
-  const n = sess.cur + 1;
+function renderTask(){
+  const t=sess.tasks[sess.cur];
+  const n=sess.cur+1;
+  document.getElementById('q-cur').textContent=n;
+  document.getElementById('q-ok').textContent=sess.ok;
+  document.getElementById('q-ng').textContent=sess.ng;
+  document.getElementById('pbar').style.width=((n-1)/sess.count*100)+'%';
+  document.getElementById('match-badge').style.display=t.isMatch?'':'none';
 
-  document.getElementById('q-cur').textContent = n;
-  document.getElementById('q-ok').textContent  = sess.ok;
-  document.getElementById('q-ng').textContent  = sess.ng;
-  document.getElementById('pbar').style.width  = ((n-1)/sess.count*100)+'%';
-  document.getElementById('match-badge').style.display = t.isMatch ? '' : 'none';
+  const isC=t.task==='color';
+  document.getElementById('color-disp').style.display=isC?'':'none';
+  document.getElementById('pos-disp').style.display=isC?'none':'';
 
-  // 刺激
-  const isC = t.task === 'color';
-  document.getElementById('color-disp').style.display = isC ? '' : 'none';
-  document.getElementById('pos-disp').style.display   = isC ? 'none' : '';
-
-  if (isC) {
-    const el = document.getElementById('color-word');
-    el.textContent = disp(t.word);
-    el.style.color = COLOR_CSS[t.displayColor];
+  if(isC){
+    const el=document.getElementById('color-word');
+    el.textContent=dp(t.word); el.style.color=CC[t.displayColor];
   } else {
-    const el = document.getElementById('pos-word');
-    el.textContent = disp(t.word);
-    el.style.left  = POS_CSS[t.displayPos];
-    el.style.fontSize = cfg.char==='hira' ? '38px' : '62px';
+    const el=document.getElementById('pos-word');
+    el.textContent=dp(t.word); el.style.left=PC[t.displayPos];
+    el.style.fontSize=cfg.char==='hira'?'38px':'62px';
   }
 
-  // 質問文
-  const qEl = document.getElementById('q-text');
-  if (t.axis === 'normal') {
-    qEl.innerHTML = isC ? '文字の<strong>色</strong>は？' : '文字は<strong>どの位置</strong>？';
-  } else {
-    qEl.innerHTML = '文字の<strong>意味</strong>（読み方）は？';
-  }
+  const qEl=document.getElementById('q-text');
+  if(t.axis==='normal') qEl.innerHTML=isC?'文字の<strong>色</strong>は？':'文字は<strong>どの位置</strong>？';
+  else qEl.innerHTML='文字の<strong>意味</strong>（読み方）は？';
 
-  // 回答UI
-  const isTh = cfg.mode === 'therapist';
-  const isRev = t.axis === 'reverse';
+  const isTh=cfg.mode==='therapist';
+  const isRev=t.axis==='reverse';
+  document.getElementById('st-bar').classList.toggle('on',isTh);
+  document.getElementById('ans-c').style.display =(!isTh&&isC&&!isRev)?'':'none';
+  document.getElementById('ans-p').style.display =(!isTh&&!isC&&!isRev)?'':'none';
+  document.getElementById('ans-mc').style.display=(!isTh&&isC&&isRev)?'':'none';
+  document.getElementById('ans-mp').style.display=(!isTh&&!isC&&isRev)?'':'none';
 
-  document.getElementById('ans-color').style.display        = (!isTh && isC && !isRev) ? '' : 'none';
-  document.getElementById('ans-pos').style.display          = (!isTh && !isC && !isRev) ? '' : 'none';
-  document.getElementById('ans-meaning-color').style.display = (!isTh && isC && isRev)  ? '' : 'none';
-  document.getElementById('ans-meaning-pos').style.display   = (!isTh && !isC && isRev) ? '' : 'none';
-  document.getElementById('th-area').style.display          = isTh ? '' : 'none';
-
-  if (!isTh) {
-    const cs = cfg.shuffle ? shuffle([...colors()])    : [...colors()];
-    const ps = cfg.shuffle ? shuffle([...positions()]) : [...positions()];
-    if (isC) {
-      const id = isRev ? 'ans-meaning-color' : 'ans-color';
-      document.getElementById(id).innerHTML = cs.map(c =>
-        `<button class="ansBtn" style="border-color:${COLOR_CSS[c]};color:${COLOR_CSS[c]};font-size:${cfg.char==='hira'?'16px':'22px'}"
-          onclick="onAns('${c}')">${disp(c)}</button>`
+  if(!isTh){
+    const cs=cfg.shuffle?shu([...CK]):[...CK];
+    const ps=cfg.shuffle?shu([...PK]):[...PK];
+    const fsz=cfg.char==='hira'?'16px':'22px';
+    const fsp=cfg.char==='hira'?'15px':'22px';
+    if(isC){
+      const id=isRev?'ans-mc':'ans-c';
+      document.getElementById(id).innerHTML=cs.map(c=>
+        `<button class="ansBtn" style="border-color:${CC[c]};color:${CC[c]};font-size:${fsz}" onclick="onAns('${c}')">${dp(c)}</button>`
       ).join('');
     } else {
-      const id = isRev ? 'ans-meaning-pos' : 'ans-pos';
-      document.getElementById(id).innerHTML = ps.map(p =>
-        `<button class="ansBtn" style="font-size:${cfg.char==='hira'?'15px':'22px'}"
-          onclick="onAns('${p}')">${disp(p)}</button>`
+      const id=isRev?'ans-mp':'ans-p';
+      document.getElementById(id).innerHTML=ps.map(p=>
+        `<button class="ansBtn" style="font-size:${fsp}" onclick="onAns('${p}')">${dp(p)}</button>`
       ).join('');
     }
-  } else {
-    document.getElementById('th-hint').textContent = disp(t.correct);
   }
 }
 
 // ===== 回答 =====
-function onAns(ans) {
-  const t = sess.tasks[sess.cur];
-  const isOk = (ans === '__ok__') ? true
-             : (ans === '__ng__') ? false
-             : ans === t.correct;
-
-  const key = `${t.task}_${t.axis}_${t.isMatch?'match':'diff'}`;
-  if (!sess.bd[key]) sess.bd[key] = {total:0,ok:0};
+function onAns(ans){
+  const t=sess.tasks[sess.cur];
+  const isOk=ans==='__ok__'?true:ans==='__ng__'?false:ans===t.correct;
+  const key=`${t.task}_${t.axis}_${t.isMatch?'m':'d'}`;
+  if(!sess.bd[key])sess.bd[key]={total:0,ok:0};
   sess.bd[key].total++;
-  if (isOk) { sess.ok++; sess.bd[key].ok++; } else { sess.ng++; }
-
-  // フィードバック
-  const fb = document.getElementById('fbk');
-  fb.textContent = isOk ? '✅' : '❌';
-  fb.classList.add('show');
-  setTimeout(() => fb.classList.remove('show'), 240);
-
-  setTimeout(() => {
-    if (t.switchAfter) showSwitch(t.nextAxis, t.task, nextTask);
-    else nextTask();
-  }, 280);
+  if(isOk){sess.ok++;sess.bd[key].ok++;}else{sess.ng++;}
+  const fb=document.getElementById('fbk');
+  fb.textContent=isOk?'✅':'❌'; fb.classList.add('on');
+  setTimeout(()=>fb.classList.remove('on'),240);
+  setTimeout(()=>{
+    if(t.swAfter)showSwitch(t.nextAxis,t.task,next);
+    else next();
+  },280);
 }
 
-function nextTask() {
+function next(){
   sess.cur++;
-  if (sess.cur >= sess.tasks.length) endSess();
+  if(sess.cur>=sess.tasks.length)endSess();
   else renderTask();
 }
 
-// ST代行ボタン
-document.getElementById('th-ok').addEventListener('click', () => onAns('__ok__'));
-document.getElementById('th-ng').addEventListener('click', () => onAns('__ng__'));
-
-// 終了ボタン
-document.getElementById('btn-abort').addEventListener('click', () => {
-  if (confirm('セッションを終了しますか？')) endSess();
-});
+document.getElementById('st-ok').addEventListener('click',()=>onAns('__ok__'));
+document.getElementById('st-ng').addEventListener('click',()=>onAns('__ng__'));
+document.getElementById('btn-abort').addEventListener('click',()=>{if(confirm('終了しますか？'))endSess();});
+document.getElementById('btn-abort-hdr').addEventListener('click',()=>{if(confirm('終了しますか？'))endSess();});
 
 // ===== 切替アラート =====
-function showSwitch(nextAxis, task, cb) {
-  const label = nextAxis==='normal'
-    ? (task==='color' ? '🎨 <strong>色</strong>を答えてください' : '📍 <strong>位置</strong>を答えてください')
-    : '💡 文字の<strong>意味</strong>を答えてください';
-  document.getElementById('switch-body').innerHTML = `次からは…<br><span style="font-size:20px">${label}</span>`;
-  const el = document.getElementById('switch-alert');
-  el.classList.add('show');
-  document.getElementById('switch-ok').onclick = () => { el.classList.remove('show'); cb(); };
+function showSwitch(nextAxis,task,cb){
+  const label=nextAxis==='normal'
+    ?(task==='color'?'🎨 <strong>色</strong>を答えてください':'📍 <strong>位置</strong>を答えてください')
+    :'💡 文字の<strong>意味</strong>を答えてください';
+  document.getElementById('sw-body').innerHTML=`次からは…<br><span style="font-size:20px">${label}</span>`;
+  const el=document.getElementById('sw-alert');
+  el.classList.add('on');
+  document.getElementById('sw-ok').onclick=()=>{el.classList.remove('on');cb();};
 }
 
 // ===== 終了 =====
-function endSess() {
-  if (timerIv) { clearInterval(timerIv); timerIv = null; }
-  const elapsed = Math.round((Date.now()-t0)/1000);
-  const total = sess.ok + sess.ng;
-  const rate  = total>0 ? Math.round(sess.ok/total*100) : 0;
-
-  document.getElementById('res-rate').textContent = rate+'%';
-  document.getElementById('res-ok').textContent   = sess.ok;
-  document.getElementById('res-ng').textContent   = sess.ng;
-  document.getElementById('res-t').textContent    = elapsed+'s';
-
-  const names = {
-    color_normal_diff:'色・通常（干渉）', color_normal_match:'色・通常（一致）',
-    color_reverse_diff:'色・逆条件（干渉）', color_reverse_match:'色・逆条件（一致）',
-    position_normal_diff:'位置・通常（干渉）', position_normal_match:'位置・通常（一致）',
-    position_reverse_diff:'位置・逆条件（干渉）', position_reverse_match:'位置・逆条件（一致）',
+function endSess(){
+  if(tiv){clearInterval(tiv);tiv=null;}
+  const elapsed=Math.round((Date.now()-t0)/1000);
+  const total=sess.ok+sess.ng;
+  const rate=total>0?Math.round(sess.ok/total*100):0;
+  document.getElementById('res-rate').textContent=rate+'%';
+  document.getElementById('res-ok').textContent=sess.ok;
+  document.getElementById('res-ng').textContent=sess.ng;
+  document.getElementById('res-t').textContent=elapsed+'s';
+  const nm={
+    color_normal_d:'色・通常（干渉）',color_normal_m:'色・通常（一致）',
+    color_reverse_d:'色・逆条件（干渉）',color_reverse_m:'色・逆条件（一致）',
+    position_normal_d:'位置・通常（干渉）',position_normal_m:'位置・通常（一致）',
+    position_reverse_d:'位置・逆条件（干渉）',position_reverse_m:'位置・逆条件（一致）',
   };
-  document.getElementById('breakdown').innerHTML =
-    Object.entries(sess.bd).map(([k,v]) =>
-      `<div class="bdRow"><span class="lbl">${names[k]||k}</span><span class="val">${v.ok}/${v.total}問</span></div>`
-    ).join('') || '<div class="bdRow"><span class="lbl">記録なし</span></div>';
-
-  saveHist({ date:new Date().toISOString(), rate, ok:sess.ok, ng:sess.ng,
-    total, elapsed, bd:sess.bd, task:cfg.task, axis:cfg.axis });
-
-  document.getElementById('btn-setup').style.display = 'none';
+  document.getElementById('bdown').innerHTML=
+    Object.entries(sess.bd).map(([k,v])=>
+      `<div class="bdRow"><span class="lb">${nm[k]||k}</span><span class="vl">${v.ok}/${v.total}問</span></div>`
+    ).join('')||'<div class="bdRow"><span class="lb">記録なし</span></div>';
+  saveHist({date:new Date().toISOString(),rate,ok:sess.ok,ng:sess.ng,total,elapsed,bd:sess.bd,task:cfg.task,axis:cfg.axis});
+  document.getElementById('btn-setup').style.display='none';
   showPg('pg-result');
 }
 
 // ===== 履歴 =====
-const SK = 'stroop_v4';
-function saveHist(r) {
-  let list = getHist(); list.unshift(r);
-  if (list.length>30) list=list.slice(0,30);
-  localStorage.setItem(SK, JSON.stringify(list));
-}
-function getHist() {
-  try { return JSON.parse(localStorage.getItem(SK))||[]; } catch { return []; }
-}
-function clearHist() {
-  if (confirm('履歴を全削除しますか？')) { localStorage.removeItem(SK); renderHist(); }
-}
-function renderHist() {
-  const list = getHist();
-  const el = document.getElementById('hist-list');
-  if (!list.length) { el.innerHTML='<div class="empty">まだ記録がありません</div>'; return; }
-  const axN = {normal:'通常',reverse:'逆条件',random:'ランダム切替'};
-  el.innerHTML = list.map(r => {
-    const d = new Date(r.date);
-    const ds = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+const SK='stroop_v5';
+function saveHist(r){let l=getHist();l.unshift(r);if(l.length>30)l=l.slice(0,30);localStorage.setItem(SK,JSON.stringify(l));}
+function getHist(){try{return JSON.parse(localStorage.getItem(SK))||[];}catch{return[];}}
+function clearHist(){if(confirm('履歴を全削除しますか？')){localStorage.removeItem(SK);renderHist();}}
+function renderHist(){
+  const list=getHist();
+  const el=document.getElementById('hist-list');
+  if(!list.length){el.innerHTML='<div class="empty">まだ記録がありません</div>';return;}
+  const an={normal:'通常',reverse:'逆条件',random:'ランダム切替'};
+  el.innerHTML=list.map(r=>{
+    const d=new Date(r.date);
+    const ds=`${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
     return `<div class="histCard">
-      <div class="histTop">
-        <div class="histDate">${ds}　${r.task==='color'?'色':'位置'}・${axN[r.axis]||r.axis}</div>
-        <div class="histPct">${r.rate}%</div>
-      </div>
-      <div class="histDetail">正解 ${r.ok}/${r.total}問　${r.elapsed}秒</div>
+      <div class="histTop"><div class="histDate">${ds}　${r.task==='color'?'色':'位置'}・${an[r.axis]||r.axis}</div><div class="histPct">${r.rate}%</div></div>
+      <div class="histDtl">正解 ${r.ok}/${r.total}問　${r.elapsed}秒</div>
     </div>`;
   }).join('');
 }
 
-// ===== SW登録 =====
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));
 }
 </script>
 </body>
